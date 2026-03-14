@@ -16,12 +16,14 @@ export class Engine {
   inputHandler: BaseInputHandler;
   screen: BaseScreen;
   player: Actor;
+  pendingBattle: { enemy: Actor } | null = null;
 
   constructor() {
     this.display = new ROT.Display({
       width: Engine.WIDTH,
       height: Engine.HEIGHT,
       forceSquareRatio: true,
+      fontFamily: "'Courier New', monospace",
     });
     this.player = spawnPlayer(
       Math.floor(Engine.MAP_WIDTH / 2),

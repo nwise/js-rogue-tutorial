@@ -22,7 +22,8 @@ import {
   GameInputHandler,
   InputState,
 } from '../input-handler';
-import { Action } from '../actions';
+import { Action, BumpAction } from '../actions';
+import { BattleScreen } from './battle-screen';
 import { ImpossibleException } from '../exceptions';
 import { Colors } from '../colors';
 import {
@@ -91,6 +92,19 @@ export class GameScreen extends BaseScreen {
     });
   }
 
+  resumeAfterBattle(opponent: Actor, runEnemyTurns: boolean) {
+    if (runEnemyTurns) {
+      this.gameMap.actors.forEach((e) => {
+        if (e.isAlive && e !== opponent) {
+          try {
+            e.ai?.perform(e, this.gameMap);
+          } catch {}
+        }
+      });
+    }
+    this.gameMap.updateFov(this.player);
+  }
+
   generateFloor(): void {
     this.currentFloor += 1;
 
@@ -113,6 +127,18 @@ export class GameScreen extends BaseScreen {
     }
 
     const action = this.inputHandler.handleKeyboardInput(event);
+
+    if (action instanceof BumpAction) {
+      const tx = this.player.x + action.dx;
+      const ty = this.player.y + action.dy;
+      const target = this.gameMap.getBlockingEntityAtLocation(tx, ty);
+      if (target instanceof Actor && target.isAlive) {
+        this.inputHandler = this.inputHandler.nextHandler;
+        this.render();
+        return new BattleScreen(this.display, this.player, target, this, true);
+      }
+    }
+
     if (action instanceof Action) {
       try {
         action.perform(this.player, this.gameMap);
@@ -122,6 +148,14 @@ export class GameScreen extends BaseScreen {
         if (error instanceof ImpossibleException) {
           window.messageLog.addMessage(error.message, Colors.Impossible);
         }
+      }
+
+      if (window.engine.pendingBattle) {
+        const { enemy } = window.engine.pendingBattle;
+        window.engine.pendingBattle = null;
+        this.inputHandler = this.inputHandler.nextHandler;
+        this.render();
+        return new BattleScreen(this.display, this.player, enemy, this, false);
       }
     }
 

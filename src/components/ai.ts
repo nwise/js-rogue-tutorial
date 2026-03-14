@@ -3,7 +3,6 @@ import * as ROT from 'rot-js';
 import {
   Action,
   BumpAction,
-  MeleeAction,
   MovementAction,
   WaitAction,
 } from '../actions';
@@ -51,7 +50,10 @@ export class HostileEnemy extends BaseAI {
 
     if (gameMap.tiles[entity.y][entity.x].visible) {
       if (distance <= 1) {
-        return new MeleeAction(dx, dy).perform(entity as Actor, gameMap);
+        if (!window.engine.pendingBattle) {
+          window.engine.pendingBattle = { enemy: entity as Actor };
+        }
+        return;
       }
       this.calculatePathTo(target.x, target.y, entity, gameMap);
     }
