@@ -12,10 +12,15 @@ import {
   spawnHealthPotion,
   spawnLeatherArmor,
   spawnLightningScroll,
+  spawnGoblin,
+  spawnOgre,
   spawnOrc,
   spawnPlayer,
+  spawnRat,
+  spawnSkeleton,
   spawnSword,
   spawnTroll,
+  spawnVampire,
 } from '../entity';
 import {
   BaseInputHandler,
@@ -279,11 +284,26 @@ export class GameScreen extends BaseScreen {
         map.removeEntity(item);
         item.parent = player.inventory;
         player.inventory.items.push(item);
+        if (entry.equipped) {
+          player.equipment.toggleEquip(item, false);
+        }
       }
     }
 
     for (let e of parsedMap.entities) {
-      if (e.name === 'Orc') {
+      if (e.name === 'Rat') {
+        const rat = spawnRat(map, e.x, e.y);
+        rat.fighter.hp = e.fighter?.hp || rat.fighter.hp;
+        if (e.aiType === 'confused') {
+          rat.ai = new ConfusedEnemy(rat.ai, e.confusedTurnsRemaining);
+        }
+      } else if (e.name === 'Goblin') {
+        const goblin = spawnGoblin(map, e.x, e.y);
+        goblin.fighter.hp = e.fighter?.hp || goblin.fighter.hp;
+        if (e.aiType === 'confused') {
+          goblin.ai = new ConfusedEnemy(goblin.ai, e.confusedTurnsRemaining);
+        }
+      } else if (e.name === 'Orc') {
         const orc = spawnOrc(map, e.x, e.y);
         orc.fighter.hp = e.fighter?.hp || orc.fighter.hp;
         if (e.aiType === 'confused') {
@@ -294,6 +314,24 @@ export class GameScreen extends BaseScreen {
         troll.fighter.hp = e.fighter?.hp || troll.fighter.hp;
         if (e.aiType === 'confused') {
           troll.ai = new ConfusedEnemy(troll.ai, e.confusedTurnsRemaining);
+        }
+      } else if (e.name === 'Skeleton') {
+        const skeleton = spawnSkeleton(map, e.x, e.y);
+        skeleton.fighter.hp = e.fighter?.hp || skeleton.fighter.hp;
+        if (e.aiType === 'confused') {
+          skeleton.ai = new ConfusedEnemy(skeleton.ai, e.confusedTurnsRemaining);
+        }
+      } else if (e.name === 'Ogre') {
+        const ogre = spawnOgre(map, e.x, e.y);
+        ogre.fighter.hp = e.fighter?.hp || ogre.fighter.hp;
+        if (e.aiType === 'confused') {
+          ogre.ai = new ConfusedEnemy(ogre.ai, e.confusedTurnsRemaining);
+        }
+      } else if (e.name === 'Vampire') {
+        const vampire = spawnVampire(map, e.x, e.y);
+        vampire.fighter.hp = e.fighter?.hp || vampire.fighter.hp;
+        if (e.aiType === 'confused') {
+          vampire.ai = new ConfusedEnemy(vampire.ai, e.confusedTurnsRemaining);
         }
       } else if (e.name === 'Health Potion') {
         spawnHealthPotion(map, e.x, e.y);
@@ -359,7 +397,7 @@ export class GameScreen extends BaseScreen {
           if (actor.inventory) {
             inventory = [];
             for (let item of actor.inventory.items) {
-              inventory.push({ itemType: item.name });
+              inventory.push({ itemType: item.name, equipped: actor.equipment.itemIsEquipped(item) });
             }
           }
         }
@@ -421,4 +459,5 @@ type SerializedFighter = {
 
 type SerializedItem = {
   itemType: string;
+  equipped: boolean;
 };

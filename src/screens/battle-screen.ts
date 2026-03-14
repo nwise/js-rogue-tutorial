@@ -1,6 +1,13 @@
 import { Display } from 'rot-js';
 import { BaseScreen } from './base-screen';
-import { Actor, Item } from '../entity';
+import {
+  Actor,
+  Item,
+  spawnHealthPotion,
+  spawnLightningScroll,
+  spawnConfusionScroll,
+  spawnFireballScroll,
+} from '../entity';
 import { GameScreen } from './game-screen';
 import { BaseInputHandler, GameInputHandler } from '../input-handler';
 import { Colors } from '../colors';
@@ -17,6 +24,20 @@ const BAR_WIDTH = 26;
 
 // ── Enemy sprites ─────────────────────────────────────────────────────────────
 const ENEMY_ART: Record<string, string[]> = {
+  Rat: [
+    "       ",
+    " ,---. ",
+    "(  o,o)",
+    " \\_v_/ ",
+    "  ~//~ ",
+  ],
+  Goblin: [
+    "  ,^,  ",
+    " (o-o) ",
+    "/|=+|/ ",
+    "  | |  ",
+    " (_(_) ",
+  ],
   Orc: [
     "  ,_,  ",
     " (o o) ",
@@ -30,6 +51,27 @@ const ENEMY_ART: Record<string, string[]> = {
     " | v |  ",
     " /| |\\ ",
     "/__|__\\",
+  ],
+  Skeleton: [
+    " _/ \\_ ",
+    "(O   O)",
+    " |-+-| ",
+    " /| |\\ ",
+    "(_) (_)",
+  ],
+  Ogre: [
+    "/=====\\",
+    "(# @ #)",
+    "|=====|",
+    "| /_\\ |",
+    "/__|__\\",
+  ],
+  Vampire: [
+    "  /^\\  ",
+    " (^.^) ",
+    "<|===|>",
+    " || || ",
+    "(_) (_)",
   ],
 };
 
@@ -100,6 +142,17 @@ export class BattleScreen extends BaseScreen {
         Colors.EnemyAttack,
       );
       this.player.fighter.hp -= damage;
+      if (this.enemy.name === 'Vampire') {
+        const drain = Math.ceil(damage / 2);
+        this.enemy.fighter.hp = Math.min(
+          this.enemy.fighter.maxHp,
+          this.enemy.fighter.hp + drain,
+        );
+        window.messageLog.addMessage(
+          `The Vampire drains ${drain} HP from you!`,
+          Colors.EnemyAttack,
+        );
+      }
     } else {
       window.messageLog.addMessage(
         `${this.enemy.name.toUpperCase()} attacks Player but does no damage.`,
@@ -126,6 +179,30 @@ export class BattleScreen extends BaseScreen {
     return !this.enemy.isAlive;
   }
 
+  private performSteal(): boolean {
+    if (this.player.inventory.items.length >= this.player.inventory.capacity) {
+      window.messageLog.addMessage('Your inventory is full!', Colors.Impossible);
+      return false;
+    }
+    if (Math.random() < 0.4) {
+      const spawners = [
+        spawnHealthPotion,
+        spawnLightningScroll,
+        spawnConfusionScroll,
+        spawnFireballScroll,
+      ];
+      const spawn = spawners[Math.floor(Math.random() * spawners.length)];
+      const item = spawn(this.gameScreen.gameMap, 0, 0);
+      this.gameScreen.gameMap.removeEntity(item);
+      item.parent = this.player.inventory;
+      this.player.inventory.items.push(item);
+      window.messageLog.addMessage(`You stole a ${item.name}!`, Colors.PlayerAttack);
+    } else {
+      window.messageLog.addMessage('Steal failed!', Colors.Impossible);
+    }
+    return true;
+  }
+
   private resolveAndReturn(runEnemyTurns: boolean): BaseScreen {
     this.gameScreen.resumeAfterBattle(this.enemy, runEnemyTurns);
     return this.gameScreen;
@@ -146,6 +223,16 @@ export class BattleScreen extends BaseScreen {
 
       if (event.key === 'i') {
         this.state = 'inventory';
+        this.render();
+        return this;
+      }
+
+      if (event.key === 's' && this.player.level.characterClass === 'thief') {
+        const acted = this.performSteal();
+        if (acted) {
+          const playerDied = this.performEnemyAttack();
+          if (playerDied) return this.resolveAndReturn(true);
+        }
         this.render();
         return this;
       }
@@ -274,14 +361,27 @@ export class BattleScreen extends BaseScreen {
     const contentY = sepY + 1;
 
     if (this.state === 'menu') {
-      window.engine.display.drawText(innerX, contentY, '[A] Attack');
-      window.engine.display.drawText(innerX, contentY + 1, '[I] Use Item');
-      window.engine.display.drawText(innerX, contentY + 2, '[F] Flee');
+      const isThief = this.player.level.characterClass === 'thief';
+      if (isThief) {
+        // 2×2 grid
+        const col = Math.floor(innerWidth / 2);
+        window.engine.display.drawText(innerX, contentY, '[A] Attack');
+        window.engine.display.drawText(innerX + col, contentY, '[I] Use Item');
+        window.engine.display.drawText(innerX, contentY + 1, '[S] Steal');
+        window.engine.display.drawText(innerX + col, contentY + 1, '[F] Flee');
+      } else {
+        // all 3 on one row
+        const col = Math.floor(innerWidth / 3);
+        window.engine.display.drawText(innerX, contentY, '[A] Attack');
+        window.engine.display.drawText(innerX + col, contentY, '[I] Use Item');
+        window.engine.display.drawText(innerX + col * 2, contentY, '[F] Flee');
+      }
     } else {
       window.engine.display.drawText(innerX, contentY, 'Items:');
       const items = this.player.inventory.items;
       if (items.length === 0) {
         window.engine.display.drawText(innerX, contentY + 1, '(empty)');
+        window.engine.display.drawText(innerX, contentY + 2, '(Esc) Back');
       } else {
         const maxVisible = 5;
         items.slice(0, maxVisible).forEach((item, i) => {
@@ -300,12 +400,9 @@ export class BattleScreen extends BaseScreen {
             `  ... ${items.length - maxVisible} more`,
           );
         }
+        const backY = contentY + 2 + Math.min(items.length, maxVisible);
+        window.engine.display.drawText(innerX, backY, '(Esc) Back');
       }
-      window.engine.display.drawText(
-        innerX,
-        contentY + 7,
-        '(Esc) Back',
-      );
     }
   }
 

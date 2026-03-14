@@ -37,34 +37,42 @@
           0 0 60px #33ff3322;
       }
 
+      #game-wrapper {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
       .controls {
         margin-top: 1.5rem;
         border: 1px solid #33ff3355;
-        padding: 1rem 1.5rem;
-        max-width: 640px;
-        width: 100%;
+        padding: 0.6rem 1.5rem;
         background-color: #080e08;
         box-shadow: 0 0 10px #33ff3322;
       }
 
       .controls p {
         font-size: 1.3em;
-        margin-bottom: 0.6rem;
+        margin-bottom: 0.4rem;
         text-transform: uppercase;
         letter-spacing: 0.15em;
         color: #66ff66;
         border-bottom: 1px solid #33ff3344;
-        padding-bottom: 0.4rem;
+        padding-bottom: 0.3rem;
       }
 
       .controls ul {
         list-style: none;
         padding: 0;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0 2rem;
       }
 
       .controls li {
-        padding: 0.2rem 0;
+        padding: 0.15rem 0;
         font-size: 1.1em;
+        white-space: nowrap;
       }
 
       .controls li::before {
@@ -74,6 +82,7 @@
     </style>
   </head>
   <body>
+    <div id="game-wrapper">
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
     <div class="controls">
@@ -89,6 +98,7 @@
         <li>&gt; &mdash; Descend stairs (&gt;)</li>
         <li>Mouse &mdash; View info / select ranged target</li>
       </ul>
+    </div>
     </div>
   </body>
 </html>

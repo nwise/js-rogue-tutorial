@@ -141,6 +141,40 @@ export function spawnPlayer(
   return player;
 }
 
+export function spawnRat(gameMap: GameMap, x: number, y: number): Actor {
+  return new Actor(
+    x,
+    y,
+    'r',
+    '#8b4513',
+    '#000',
+    'Rat',
+    new HostileEnemy(),
+    new Equipment(),
+    new Fighter(4, 0, 2),
+    new Inventory(0),
+    new Level(0, 15),
+    gameMap,
+  );
+}
+
+export function spawnGoblin(gameMap: GameMap, x: number, y: number): Actor {
+  return new Actor(
+    x,
+    y,
+    'g',
+    '#7f7f00',
+    '#000',
+    'Goblin',
+    new HostileEnemy(),
+    new Equipment(),
+    new Fighter(8, 0, 3),
+    new Inventory(0),
+    new Level(0, 25),
+    gameMap,
+  );
+}
+
 export function spawnOrc(gameMap: GameMap, x: number, y: number): Actor {
   return new Actor(
     x,
@@ -171,6 +205,57 @@ export function spawnTroll(gameMap: GameMap, x: number, y: number): Actor {
     new Fighter(16, 1, 4),
     new Inventory(0),
     new Level(0, 100),
+    gameMap,
+  );
+}
+
+export function spawnSkeleton(gameMap: GameMap, x: number, y: number): Actor {
+  return new Actor(
+    x,
+    y,
+    's',
+    '#c8c8c8',
+    '#000',
+    'Skeleton',
+    new HostileEnemy(),
+    new Equipment(),
+    new Fighter(13, 2, 4),
+    new Inventory(0),
+    new Level(0, 50),
+    gameMap,
+  );
+}
+
+export function spawnOgre(gameMap: GameMap, x: number, y: number): Actor {
+  return new Actor(
+    x,
+    y,
+    'O',
+    '#8b4500',
+    '#000',
+    'Ogre',
+    new HostileEnemy(),
+    new Equipment(),
+    new Fighter(25, 1, 5),
+    new Inventory(0),
+    new Level(0, 120),
+    gameMap,
+  );
+}
+
+export function spawnVampire(gameMap: GameMap, x: number, y: number): Actor {
+  return new Actor(
+    x,
+    y,
+    'V',
+    '#7f007f',
+    '#000',
+    'Vampire',
+    new HostileEnemy(),
+    new Equipment(),
+    new Fighter(18, 3, 6),
+    new Inventory(0),
+    new Level(0, 200),
     gameMap,
   );
 }
@@ -312,8 +397,13 @@ type SPAWNMAP = {
 };
 
 export const spawnMap: SPAWNMAP = {
+  spawnRat,
+  spawnGoblin,
   spawnOrc,
   spawnTroll,
+  spawnSkeleton,
+  spawnOgre,
+  spawnVampire,
   spawnHealthPotion,
   spawnConfusionScroll,
   spawnLightningScroll,

@@ -61,7 +61,18 @@ const ITEM_CHANCES: WeightedChoices[] = [
 const MONSTER_CHANCES: WeightedChoices[] = [
   {
     floor: 0,
-    weights: [{ value: 'spawnOrc', weight: 80 }],
+    weights: [
+      { value: 'spawnRat', weight: 60 },
+      { value: 'spawnGoblin', weight: 40 },
+      { value: 'spawnOrc', weight: 20 },
+    ],
+  },
+  {
+    floor: 2,
+    weights: [
+      { value: 'spawnOrc', weight: 50 },
+      { value: 'spawnSkeleton', weight: 15 },
+    ],
   },
   {
     floor: 3,
@@ -69,11 +80,23 @@ const MONSTER_CHANCES: WeightedChoices[] = [
   },
   {
     floor: 5,
-    weights: [{ value: 'spawnTroll', weight: 30 }],
+    weights: [
+      { value: 'spawnTroll', weight: 30 },
+      { value: 'spawnOgre', weight: 15 },
+      { value: 'spawnRat', weight: 20 },
+    ],
+  },
+  {
+    floor: 6,
+    weights: [{ value: 'spawnVampire', weight: 10 }],
   },
   {
     floor: 7,
-    weights: [{ value: 'spawnTroll', weight: 60 }],
+    weights: [
+      { value: 'spawnTroll', weight: 60 },
+      { value: 'spawnOgre', weight: 30 },
+      { value: 'spawnVampire', weight: 20 },
+    ],
   },
 ];
 
