@@ -3,6 +3,7 @@ import { BaseScreen } from './base-screen';
 import { Actor } from '../entity';
 import { Engine } from '../engine';
 import { BaseInputHandler, GameInputHandler } from '../input-handler';
+import { ClassSelectScreen } from './class-select-screen';
 import { GameScreen } from './game-screen';
 import { renderFrameWithTitle } from '../render-functions';
 
@@ -29,7 +30,7 @@ export class MainMenu extends BaseScreen {
       this.showPopup = false;
     } else {
       if (event.key === 'n') {
-        return new GameScreen(this.display, this.player);
+        return new ClassSelectScreen(this.display, this.player);
       } else if (event.key === 'c') {
         try {
           const saveGame = localStorage.getItem('roguesave');

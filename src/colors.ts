@@ -13,6 +13,7 @@ export enum Colors {
   BarFilled = '#006000',
   BarEmpty = '#401010',
   Invalid = '#ffff00',
+  LevelUp = '#ffe080',
   Impossible = '#808080',
   Error = '#ff4040',
   HealthRecovered = '#00ff00',

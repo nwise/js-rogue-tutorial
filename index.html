@@ -3,23 +3,91 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=VT323&display=swap"
+      rel="stylesheet"
+    />
     <title>Dungeon</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        background-color: #0d0d0d;
+        color: #33ff33;
+        font-family: 'VT323', 'Courier New', Courier, monospace;
+        font-size: 18px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem 1rem;
+      }
+
+      #app canvas {
+        display: block;
+        border: 1px solid #33ff3360;
+        box-shadow:
+          0 0 20px #33ff3366,
+          0 0 60px #33ff3322;
+      }
+
+      .controls {
+        margin-top: 1.5rem;
+        border: 1px solid #33ff3355;
+        padding: 1rem 1.5rem;
+        max-width: 640px;
+        width: 100%;
+        background-color: #080e08;
+        box-shadow: 0 0 10px #33ff3322;
+      }
+
+      .controls p {
+        font-size: 1.3em;
+        margin-bottom: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        color: #66ff66;
+        border-bottom: 1px solid #33ff3344;
+        padding-bottom: 0.4rem;
+      }
+
+      .controls ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      .controls li {
+        padding: 0.2rem 0;
+        font-size: 1.1em;
+      }
+
+      .controls li::before {
+        content: '> ';
+        color: #66ff66;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
-    <div>
-      <p>Controls:</p>
+    <div class="controls">
+      <p>Controls</p>
       <ul>
-        <li>Use Arrow Keys, NumPad, or vim keys to Move</li>
-        <li>v: View Log</li>
-        <li>5 or .(period): Wait</li>
-        <li>g: Pick up item</li>
-        <li>i: Inventory (press letter for inventory item to select)</li>
-        <li>c: Character Screen</li>
-        <li>s: Save</li>
-        <li>&gt;: Descend when stairs(&gt;)</li>
-        <li>Use mouse to see info or select target of ranged attack</li>
+        <li>Arrow Keys / NumPad / vim keys &mdash; Move</li>
+        <li>v &mdash; View Message Log</li>
+        <li>5 or . (period) &mdash; Wait</li>
+        <li>g &mdash; Pick up item</li>
+        <li>i &mdash; Inventory (press letter to select)</li>
+        <li>c &mdash; Character Screen</li>
+        <li>s &mdash; Save</li>
+        <li>&gt; &mdash; Descend stairs (&gt;)</li>
+        <li>Mouse &mdash; View info / select ranged target</li>
       </ul>
     </div>
   </body>

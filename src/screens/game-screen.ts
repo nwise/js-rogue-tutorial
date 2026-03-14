@@ -31,6 +31,7 @@ import {
   renderNamesAtLocation,
 } from '../render-functions';
 import { ConfusedEnemy, HostileEnemy } from '../components/ai';
+import { CharacterClass } from '../classes';
 import { Tile } from '../tile-types';
 
 export class GameScreen extends BaseScreen {
@@ -194,6 +195,7 @@ export class GameScreen extends BaseScreen {
     player.level.currentXp = playerEntity.level
       ? playerEntity.level.currentXp
       : 0;
+    player.level.characterClass = playerEntity.level?.characterClass ?? null;
     window.engine.player = player;
 
     const map = new GameMap(parsedMap.width, parsedMap.height, display, [
@@ -302,6 +304,7 @@ export class GameScreen extends BaseScreen {
             levelUpBase,
             levelUpFactor,
             xpGiven,
+            characterClass,
           } = actor.level;
           fighter = { maxHp, hp, defense, power };
           level = {
@@ -310,6 +313,7 @@ export class GameScreen extends BaseScreen {
             levelUpBase,
             levelUpFactor,
             xpGiven,
+            characterClass,
           };
           if (actor.ai) {
             aiType = actor.ai instanceof HostileEnemy ? 'hostile' : 'confused';
@@ -371,6 +375,7 @@ type SerializedLevel = {
   currentLevel: number;
   currentXp: number;
   levelUpFactor: number;
+  characterClass?: CharacterClass | null;
 };
 
 type SerializedFighter = {

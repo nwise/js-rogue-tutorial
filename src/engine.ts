@@ -28,7 +28,7 @@ export class Engine {
       Math.floor(Engine.MAP_HEIGHT / 2),
     );
     const container = this.display.getContainer()!;
-    document.body.appendChild(container);
+    document.getElementById('app')!.appendChild(container);
 
     this.inputHandler = new GameInputHandler();
 

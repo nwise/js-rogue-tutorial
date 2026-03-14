@@ -1,5 +1,7 @@
 import { BaseComponent } from './base-component';
 import { Actor } from '../entity';
+import { CharacterClass, CLASS_DEFINITIONS } from '../classes';
+import { Colors } from '../colors';
 
 export class Level extends BaseComponent {
   constructor(
@@ -8,6 +10,7 @@ export class Level extends BaseComponent {
     public currentLevel: number = 1,
     public currentXp: number = 0,
     public levelUpFactor: number = 150,
+    public characterClass: CharacterClass | null = null,
   ) {
     super();
   }
@@ -28,9 +31,7 @@ export class Level extends BaseComponent {
     window.messageLog.addMessage(`You gain ${xp} experience points.`);
 
     if (this.requiresLevelUp) {
-      window.messageLog.addMessage(
-        `You advance to level ${this.currentLevel + 1}`,
-      );
+      this.applyLevelUp();
     }
   }
 
@@ -39,34 +40,19 @@ export class Level extends BaseComponent {
     this.currentLevel++;
   }
 
-  increaseMaxHp(amount: number = 20) {
+  applyLevelUp() {
+    if (!this.characterClass) return;
     const actor = this.parent as Actor;
-    if (!actor) return;
-    actor.fighter.maxHp += amount;
-    actor.fighter.hp += amount;
-
-    window.messageLog.addMessage('Your health improves!');
-
-    this.increaseLevel();
-  }
-
-  increasePower(amount: number = 1) {
-    const actor = this.parent as Actor;
-    if (!actor) return;
-    actor.fighter.basePower += amount;
-
-    window.messageLog.addMessage('You feel stronger!');
-
-    this.increaseLevel();
-  }
-
-  increaseDefense(amount: number = 1) {
-    const actor = this.parent as Actor;
-    if (!actor) return;
-    actor.fighter.baseDefense += amount;
-
-    window.messageLog.addMessage('Your movements are getting swifter!');
-
+    const nextLevel = this.currentLevel + 1;
+    const gains = CLASS_DEFINITIONS[this.characterClass].gains(nextLevel);
+    actor.fighter.maxHp += gains.hp;
+    actor.fighter.hp += gains.hp;
+    actor.fighter.basePower += gains.power;
+    actor.fighter.baseDefense += gains.defense;
+    window.messageLog.addMessage(
+      `You reached level ${nextLevel}! HP +${gains.hp}, Power +${gains.power}, Defense +${gains.defense}.`,
+      Colors.LevelUp,
+    );
     this.increaseLevel();
   }
 }
