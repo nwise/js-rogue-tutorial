@@ -19,7 +19,7 @@ export const CLASS_DEFINITIONS: Record<CharacterClass, ClassDefinition> = {
     color: '#ff9040',
     startingHp: 35,
     startingPower: 2,
-    startingDefense: 2,
+    startingDefense: 4,
     gains(level: number) {
       return {
         hp: 8 + Math.floor(level / 2),
@@ -35,7 +35,7 @@ export const CLASS_DEFINITIONS: Record<CharacterClass, ClassDefinition> = {
     color: '#a040ff',
     startingHp: 20,
     startingPower: 4,
-    startingDefense: 1,
+    startingDefense: 2,
     gains(level: number) {
       return {
         hp: level % 3 === 0 ? 4 : 2,
@@ -51,7 +51,7 @@ export const CLASS_DEFINITIONS: Record<CharacterClass, ClassDefinition> = {
     color: '#40ff80',
     startingHp: 25,
     startingPower: 3,
-    startingDefense: 1,
+    startingDefense: 3,
     gains(level: number) {
       return {
         hp: level % 2 === 0 ? 5 : 3,
