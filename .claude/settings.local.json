@@ -1,0 +1,8 @@
+{
+  "spinnerTipsEnabled": false,
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)"
+    ]
+  }
+}
