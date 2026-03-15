@@ -16,105 +16,12 @@ import { EquipAction, ItemAction } from '../actions';
 
 type BattleState = 'menu' | 'inventory';
 
-const FRAME_X = 8;
-const FRAME_Y = 4;
-const FRAME_WIDTH = 64;
+const FRAME_X = 4;
+const FRAME_Y = 3;
+const FRAME_WIDTH = 42;
 const FRAME_HEIGHT = 22;
-const BAR_WIDTH = 26;
+const BAR_WIDTH = 14;
 
-// ── Enemy sprites ─────────────────────────────────────────────────────────────
-const ENEMY_ART: Record<string, string[]> = {
-  Rat: [
-    "       ",
-    " ,---. ",
-    "(  o,o)",
-    " \\_v_/ ",
-    "  ~//~ ",
-  ],
-  Goblin: [
-    "  ,^,  ",
-    " (o-o) ",
-    "/|=+|/ ",
-    "  | |  ",
-    " (_(_) ",
-  ],
-  Orc: [
-    "  ,_,  ",
-    " (o o) ",
-    " -\\v/- ",
-    " /|||\\  ",
-    "(_/ \\_)",
-  ],
-  Troll: [
-    " /^^^\\  ",
-    "(O   O) ",
-    " | v |  ",
-    " /| |\\ ",
-    "/__|__\\",
-  ],
-  Skeleton: [
-    " _/ \\_ ",
-    "(O   O)",
-    " |-+-| ",
-    " /| |\\ ",
-    "(_) (_)",
-  ],
-  Ogre: [
-    "/=====\\",
-    "(# @ #)",
-    "|=====|",
-    "| /_\\ |",
-    "/__|__\\",
-  ],
-  Vampire: [
-    "  /^\\  ",
-    " (^.^) ",
-    "<|===|>",
-    " || || ",
-    "(_) (_)",
-  ],
-};
-
-const DEFAULT_ENEMY_ART: string[] = [
-  "  .-.  ",
-  " (? ?) ",
-  "  -=-  ",
-  " /| |\\ ",
-  "(_/ \\_)",
-];
-
-// ── Player sprites by class ───────────────────────────────────────────────────
-const PLAYER_ART: Record<string, string[]> = {
-  warrior: [
-    " _[_]_ ",
-    "[_____]",
-    "| ]=[ |",
-    "|  |  |",
-    "/_/ \\_\\",
-  ],
-  wizard: [
-    "  ***  ",
-    " (^_^) ",
-    "  )|(  ",
-    "  -|-  ",
-    " /   \\ ",
-  ],
-  thief: [
-    "  /\\   ",
-    " (;-;) ",
-    "><   ><",
-    "  | |  ",
-    " /   \\ ",
-  ],
-};
-
-const DEFAULT_PLAYER_ART: string[] = [
-  "  .-. ",
-  " (o o)",
-  "  )o( ",
-  " /|\\ ",
-  "(_/ \\_)",
-];
 
 export class BattleScreen extends BaseScreen {
   inputHandler: BaseInputHandler;
@@ -204,6 +111,7 @@ export class BattleScreen extends BaseScreen {
   }
 
   private resolveAndReturn(runEnemyTurns: boolean): BaseScreen {
+    window.engine.pixiRenderer.clearBattleSprites();
     this.gameScreen.resumeAfterBattle(this.enemy, runEnemyTurns);
     return this.gameScreen;
   }
@@ -305,30 +213,33 @@ export class BattleScreen extends BaseScreen {
 
   render() {
     this.gameScreen.render();
+    window.engine.pixiRenderer.clearGameSprites();
+    for (let y = FRAME_Y; y < FRAME_Y + FRAME_HEIGHT; y++) {
+      for (let x = FRAME_X; x < FRAME_X + FRAME_WIDTH; x++) {
+        this.display.draw(x, y, ' ', '#000', '#000');
+      }
+    }
     renderFrameWithTitle(FRAME_X, FRAME_Y, FRAME_WIDTH, FRAME_HEIGHT, 'Battle');
 
     const innerX = FRAME_X + 2;
     const innerWidth = FRAME_WIDTH - 4;   // 60
     const halfWidth = Math.floor(innerWidth / 2); // 30
 
-    // ── ASCII art, side-by-side ───────────────────────────────────────────────
-    const enemyArt = ENEMY_ART[this.enemy.name] ?? DEFAULT_ENEMY_ART;
+    // ── Sprite art via PixiJS ────────────────────────────────────────────────
+    const artRows = 5;
     const playerClass = this.player.level.characterClass;
-    const playerArt = playerClass ? (PLAYER_ART[playerClass] ?? DEFAULT_PLAYER_ART) : DEFAULT_PLAYER_ART;
 
-    const artRows = Math.max(enemyArt.length, playerArt.length);
+    const enemyCenterCol = innerX + Math.floor(halfWidth / 2);
+    const playerCenterCol = innerX + halfWidth + Math.floor(halfWidth / 2);
+    const artTopRow = FRAME_Y + 2;
 
-    for (let row = 0; row < artRows; row++) {
-      const eLine = enemyArt[row] ?? '';
-      const pLine = playerArt[row] ?? '';
-
-      const eX = innerX + Math.floor((halfWidth - eLine.length) / 2);
-      const pX = innerX + halfWidth + Math.floor((halfWidth - pLine.length) / 2);
-      const y = FRAME_Y + 2 + row;
-
-      this.drawArtLine(eX, y, eLine);
-      this.drawArtLine(pX, y, pLine);
-    }
+    window.engine.pixiRenderer.renderBattleSprites(
+      this.enemy,
+      playerClass,
+      enemyCenterCol,
+      playerCenterCol,
+      artTopRow,
+    );
 
     // "vs" divider in the vertical center of the art
     const vsY = FRAME_Y + 2 + Math.floor(artRows / 2);
@@ -403,12 +314,6 @@ export class BattleScreen extends BaseScreen {
         const backY = contentY + 2 + Math.min(items.length, maxVisible);
         window.engine.display.drawText(innerX, backY, '(Esc) Back');
       }
-    }
-  }
-
-  private drawArtLine(x: number, y: number, line: string) {
-    for (let i = 0; i < line.length; i++) {
-      window.engine.display.draw(x + i, y, line[i], Colors.White, Colors.Black);
     }
   }
 

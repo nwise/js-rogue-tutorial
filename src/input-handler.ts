@@ -45,7 +45,8 @@ export abstract class BaseInputHandler {
   abstract handleKeyboardInput(event: KeyboardEvent): Action | null;
 
   handleMouseMovement(position: [number, number]) {
-    this.mousePosition = position;
+    const { cameraX, cameraY } = window.engine;
+    this.mousePosition = [position[0] + cameraX, position[1] + cameraY];
   }
 
   onRender(_display: Display) {}
@@ -182,7 +183,7 @@ export class InventoryInputHandler extends BaseInputHandler {
     const itemCount = window.engine.player.inventory.items.length;
     const height = itemCount + 2 <= 3 ? 3 : itemCount + 2;
     const width = title.length + 4;
-    const x = window.engine.player.x <= 30 ? 40 : 0;
+    const x = window.engine.player.x <= 25 ? 40 : 0;
     const y = 0;
 
     renderFrameWithTitle(x, y, width, height, title);
@@ -249,8 +250,8 @@ export abstract class SelectIndexHandler extends BaseInputHandler {
       const [dx, dy] = moveAmount;
       x += dx * modifier;
       y += dy * modifier;
-      x = Math.max(0, Math.min(x, Engine.MAP_WIDTH - 1));
-      y = Math.max(0, Math.min(y, Engine.MAP_HEIGHT - 1));
+      x = Math.max(0, Math.min(x, Engine.DUNGEON_WIDTH - 1));
+      y = Math.max(0, Math.min(y, Engine.DUNGEON_HEIGHT - 1));
       this.mousePosition = [x, y];
       return null;
     } else if (event.key === 'Enter') {
@@ -317,7 +318,7 @@ export class CharacterScreenInputHandler extends BaseInputHandler {
   }
 
   onRender(display: Display) {
-    const x = window.engine.player.x <= 30 ? 40 : 0;
+    const x = window.engine.player.x <= 25 ? 40 : 0;
     const y = 0;
     const title = 'Character Information';
     const width = title.length + 4;

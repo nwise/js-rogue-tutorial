@@ -38,10 +38,10 @@ export class ClassSelectScreen extends BaseScreen {
   render() {
     this.display.clear();
 
-    const frameX = 15;
-    const frameY = 8;
-    const frameWidth = 50;
-    const frameHeight = 22;
+    const frameX = 2;
+    const frameY = 3;
+    const frameWidth = 46;
+    const frameHeight = 14;
 
     renderFrameWithTitle(frameX, frameY, frameWidth, frameHeight, 'Choose Your Class');
 
@@ -60,10 +60,9 @@ export class ClassSelectScreen extends BaseScreen {
         `HP: ${def.startingHp}  Power: ${def.startingPower}  Defense: ${def.startingDefense}`,
       );
       row++;
-      this.display.drawText(frameX + 4, row, def.description);
-      row += 3;
+      row += 2;
     }
 
-    this.display.drawText(frameX + 2, frameY + frameHeight - 2, 'Escape) Back');
+    this.display.drawText(frameX + 2, frameY + frameHeight - 2, '[Esc] Back');
   }
 }

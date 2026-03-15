@@ -1,4 +1,5 @@
 import { BaseScreen } from './base-screen';
+import { Engine } from '../engine';
 import { GameMap } from '../game-map';
 import { Display } from 'rot-js';
 import { generateDungeon } from '../procgen';
@@ -41,8 +42,8 @@ import { CharacterClass } from '../classes';
 import { Tile } from '../tile-types';
 
 export class GameScreen extends BaseScreen {
-  public static readonly MAP_WIDTH = 80;
-  public static readonly MAP_HEIGHT = 43;
+  public static readonly MAP_WIDTH = 50;
+  public static readonly MAP_HEIGHT = 27;
   public static readonly MIN_ROOM_SIZE = 6;
   public static readonly MAX_ROOM_SIZE = 10;
   public static readonly MAX_ROOMS = 30;
@@ -114,8 +115,8 @@ export class GameScreen extends BaseScreen {
     this.currentFloor += 1;
 
     this.gameMap = generateDungeon(
-      GameScreen.MAP_WIDTH,
-      GameScreen.MAP_HEIGHT,
+      Engine.DUNGEON_WIDTH,
+      Engine.DUNGEON_HEIGHT,
       GameScreen.MAX_ROOMS,
       GameScreen.MIN_ROOM_SIZE,
       GameScreen.MAX_ROOM_SIZE,
@@ -171,35 +172,40 @@ export class GameScreen extends BaseScreen {
   }
 
   render() {
+    window.engine.computeCamera(this.gameMap.width, this.gameMap.height);
+    const camX = window.engine.cameraX;
+    const camY = window.engine.cameraY;
+
     this.display.clear();
-    window.messageLog.render(this.display, 21, 45, 40, 5);
+    window.messageLog.render(this.display, 15, 29, 28, 3);
 
     renderHealthBar(
       this.display,
       this.player.fighter.hp,
       this.player.fighter.maxHp,
-      20,
+      14,
     );
 
     renderNamesAtLocation(
-      21,
-      44,
+      15,
+      28,
       this.inputHandler.mousePosition,
       this.gameMap,
     );
 
-    this.display.drawText(0, 47, `Dungeon level: ${this.currentFloor}`);
+    this.display.drawText(0, 33, `Dungeon level: ${this.currentFloor}`);
 
-    this.gameMap.render();
+    this.gameMap.render(camX, camY, Engine.MAP_WIDTH, Engine.MAP_HEIGHT);
+    this.gameMap.renderToPixi(window.engine.pixiRenderer, camX, camY);
 
     if (this.inputHandler.inputState === InputState.Log) {
-      renderFrameWithTitle(3, 3, 74, 38, 'Message History');
+      renderFrameWithTitle(2, 2, 46, 23, 'Message History');
       window.messageLog.renderMessages(
         this.display,
-        4,
-        4,
-        72,
-        36,
+        3,
+        3,
+        44,
+        21,
         window.messageLog.messages.slice(
           0,
           this.inputHandler.logCursorPosition + 1,
@@ -207,8 +213,8 @@ export class GameScreen extends BaseScreen {
       );
     }
     if (this.inputHandler.inputState === InputState.Target) {
-      const [x, y] = this.inputHandler.mousePosition;
-      this.display.drawOver(x, y, null, '#000', '#fff');
+      const [mapX, mapY] = this.inputHandler.mousePosition;
+      this.display.drawOver(mapX - camX, mapY - camY, null, '#000', '#fff');
     }
     this.inputHandler.onRender(this.display);
   }
