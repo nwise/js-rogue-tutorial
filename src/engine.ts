@@ -1,7 +1,8 @@
 import * as ROT from 'rot-js';
 
 import { BaseInputHandler, GameInputHandler } from './input-handler';
-import { Actor, spawnPlayer } from './entity';
+import { Actor } from './entity';
+import { spawnPlayer } from './entity-factories';
 import { BaseScreen } from './screens/base-screen';
 // import { GameScreen } from './screens/game-screen';
 import { MainMenu } from './screens/main-menu';
@@ -25,37 +26,49 @@ export class Engine {
   cameraY = 0;
 
   constructor() {
-    this.display = new ROT.Display({
+    this.display = this.initRotDisplay();
+    this.player = spawnPlayer(
+      Math.floor(Engine.MAP_WIDTH / 2),
+      Math.floor(Engine.MAP_HEIGHT / 2),
+    );
+
+    const rotCanvas = this.display.getContainer()! as HTMLCanvasElement;
+    this.mountRotCanvas(rotCanvas);
+
+    this.pixiRenderer = new PixiRenderer(Engine.WIDTH);
+    this.inputHandler = new GameInputHandler();
+    this.registerInputListeners();
+
+    // this.screen = new GameScreen(this.display, this.player);
+    this.screen = new MainMenu(this.display, this.player);
+
+    this.initPixi(rotCanvas);
+  }
+
+  private initRotDisplay(): ROT.Display {
+    return new ROT.Display({
       width: Engine.WIDTH,
       height: Engine.HEIGHT,
       forceSquareRatio: true,
       fontFamily: "'Courier New', monospace",
       fontSize: 29,
     });
-    this.player = spawnPlayer(
-      Math.floor(Engine.MAP_WIDTH / 2),
-      Math.floor(Engine.MAP_HEIGHT / 2),
-    );
+  }
 
+  private mountRotCanvas(canvas: HTMLCanvasElement): void {
     const appEl = document.getElementById('app')!;
     appEl.style.position = 'relative';
+    canvas.style.position = 'absolute';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.zIndex = '0';
+    canvas.style.imageRendering = 'pixelated';
+    appEl.appendChild(canvas);
+    appEl.style.width = canvas.width + 'px';
+    appEl.style.height = canvas.height + 'px';
+  }
 
-    // rot-js canvas — on top (z-index 1), transparent background in map area
-    const rotCanvas = this.display.getContainer()! as HTMLCanvasElement;
-    rotCanvas.style.position = 'absolute';
-    rotCanvas.style.top = '0';
-    rotCanvas.style.left = '0';
-    rotCanvas.style.zIndex = '0';
-    rotCanvas.style.imageRendering = 'pixelated';
-    appEl.appendChild(rotCanvas);
-    appEl.style.width = rotCanvas.width + 'px';
-    appEl.style.height = rotCanvas.height + 'px';
-
-    // PixiJS renderer — behind rot-js (z-index 0)
-    this.pixiRenderer = new PixiRenderer(Engine.WIDTH);
-
-    this.inputHandler = new GameInputHandler();
-
+  private registerInputListeners(): void {
     window.addEventListener('keydown', (event) => {
       this.update(event);
     });
@@ -66,13 +79,6 @@ export class Engine {
       );
       this.screen.render();
     });
-
-    // this.screen = new GameScreen(this.display, this.player);
-    this.screen = new MainMenu(this.display, this.player);
-
-    // Initialize PixiJS asynchronously after rot-js canvas is sized
-    // We wait for the rot-js canvas to have real dimensions
-    this.initPixi(rotCanvas);
   }
 
   private async initPixi(rotCanvas: HTMLCanvasElement): Promise<void> {

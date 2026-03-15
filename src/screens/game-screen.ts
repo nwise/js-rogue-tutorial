@@ -3,9 +3,8 @@ import { Engine } from '../engine';
 import { GameMap } from '../game-map';
 import { Display } from 'rot-js';
 import { generateDungeon } from '../procgen';
+import { Actor, Entity, Item } from '../entity';
 import {
-  Actor,
-  Item,
   spawnChainMail,
   spawnConfusionScroll,
   spawnDagger,
@@ -22,7 +21,7 @@ import {
   spawnSword,
   spawnTroll,
   spawnVampire,
-} from '../entity';
+} from '../entity-factories';
 import {
   BaseInputHandler,
   GameInputHandler,
@@ -231,61 +230,65 @@ export class GameScreen extends BaseScreen {
   ): [GameMap, Actor, number] {
     const parsedMap = JSON.parse(serializedGameMap) as SerializedGameMap;
     const playerEntity = parsedMap.entities.find((e) => e.name === 'Player');
-    if (!playerEntity) throw new Error('shit broke');
-    const player = spawnPlayer(playerEntity.x, playerEntity.y);
-    player.fighter.hp = playerEntity.fighter?.hp || player.fighter.hp;
-    player.level.currentLevel = playerEntity.level
-      ? playerEntity.level.currentLevel
-      : 0;
-    player.level.currentXp = playerEntity.level
-      ? playerEntity.level.currentXp
-      : 0;
-    player.level.characterClass = playerEntity.level?.characterClass ?? null;
-    window.engine.player = player;
+    if (!playerEntity) throw new Error('Save data is missing player entity');
 
-    const map = new GameMap(parsedMap.width, parsedMap.height, display, [
-      player,
-    ]);
+    const map = new GameMap(parsedMap.width, parsedMap.height, display, []);
     map.tiles = parsedMap.tiles;
 
-    const playerInventory = playerEntity?.inventory || [];
-    for (let entry of playerInventory) {
+    const player = GameScreen.deserializePlayer(playerEntity, map);
+    GameScreen.deserializeInventory(player, playerEntity, map);
+    GameScreen.deserializeMapEntities(map, parsedMap.entities);
+
+    return [map, player, parsedMap.currentFloor];
+  }
+
+  private static deserializePlayer(
+    raw: SerializedEntity,
+    map: GameMap,
+  ): Actor {
+    const player = spawnPlayer(raw.x, raw.y, map);
+    player.fighter.hp = raw.fighter?.hp || player.fighter.hp;
+    player.level.currentLevel = raw.level ? raw.level.currentLevel : 0;
+    player.level.currentXp = raw.level ? raw.level.currentXp : 0;
+    player.level.characterClass = raw.level?.characterClass ?? null;
+    window.engine.player = player;
+    return player;
+  }
+
+  private static deserializeInventory(
+    player: Actor,
+    rawPlayer: SerializedEntity,
+    map: GameMap,
+  ): void {
+    const playerInventory = rawPlayer.inventory || [];
+    for (const entry of playerInventory) {
       let item: Item | null = null;
       switch (entry.itemType) {
-        case 'Health Potion': {
+        case 'Health Potion':
           item = spawnHealthPotion(map, 0, 0);
           break;
-        }
-        case 'Lightning Scroll': {
+        case 'Lightning Scroll':
           item = spawnLightningScroll(map, 0, 0);
           break;
-        }
-        case 'Confusion Scroll': {
+        case 'Confusion Scroll':
           item = spawnConfusionScroll(map, 0, 0);
           break;
-        }
-        case 'Fireball Scroll': {
+        case 'Fireball Scroll':
           item = spawnFireballScroll(map, 0, 0);
           break;
-        }
-        case 'Dagger': {
+        case 'Dagger':
           item = spawnDagger(map, 0, 0);
           break;
-        }
-        case 'Sword': {
+        case 'Sword':
           item = spawnSword(map, 0, 0);
           break;
-        }
-        case 'Leather Armor': {
+        case 'Leather Armor':
           item = spawnLeatherArmor(map, 0, 0);
           break;
-        }
-        case 'Chain Mail': {
+        case 'Chain Mail':
           item = spawnChainMail(map, 0, 0);
           break;
-        }
       }
-
       if (item) {
         map.removeEntity(item);
         item.parent = player.inventory;
@@ -295,69 +298,55 @@ export class GameScreen extends BaseScreen {
         }
       }
     }
+  }
 
-    for (let e of parsedMap.entities) {
-      if (e.name === 'Rat') {
-        const rat = spawnRat(map, e.x, e.y);
-        rat.fighter.hp = e.fighter?.hp || rat.fighter.hp;
-        if (e.aiType === 'confused') {
-          rat.ai = new ConfusedEnemy(rat.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Goblin') {
-        const goblin = spawnGoblin(map, e.x, e.y);
-        goblin.fighter.hp = e.fighter?.hp || goblin.fighter.hp;
-        if (e.aiType === 'confused') {
-          goblin.ai = new ConfusedEnemy(goblin.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Orc') {
-        const orc = spawnOrc(map, e.x, e.y);
-        orc.fighter.hp = e.fighter?.hp || orc.fighter.hp;
-        if (e.aiType === 'confused') {
-          orc.ai = new ConfusedEnemy(orc.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Troll') {
-        const troll = spawnTroll(map, e.x, e.y);
-        troll.fighter.hp = e.fighter?.hp || troll.fighter.hp;
-        if (e.aiType === 'confused') {
-          troll.ai = new ConfusedEnemy(troll.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Skeleton') {
-        const skeleton = spawnSkeleton(map, e.x, e.y);
-        skeleton.fighter.hp = e.fighter?.hp || skeleton.fighter.hp;
-        if (e.aiType === 'confused') {
-          skeleton.ai = new ConfusedEnemy(skeleton.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Ogre') {
-        const ogre = spawnOgre(map, e.x, e.y);
-        ogre.fighter.hp = e.fighter?.hp || ogre.fighter.hp;
-        if (e.aiType === 'confused') {
-          ogre.ai = new ConfusedEnemy(ogre.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Vampire') {
-        const vampire = spawnVampire(map, e.x, e.y);
-        vampire.fighter.hp = e.fighter?.hp || vampire.fighter.hp;
-        if (e.aiType === 'confused') {
-          vampire.ai = new ConfusedEnemy(vampire.ai, e.confusedTurnsRemaining);
-        }
-      } else if (e.name === 'Health Potion') {
-        spawnHealthPotion(map, e.x, e.y);
-      } else if (e.name === 'Lightning Scroll') {
-        spawnLightningScroll(map, e.x, e.y);
-      } else if (e.name === 'Confusion Scroll') {
-        spawnConfusionScroll(map, e.x, e.y);
-      } else if (e.name === 'Fireball Scroll') {
-        spawnFireballScroll(map, e.x, e.y);
-      } else if (e.name === 'Dagger') {
-        spawnDagger(map, e.x, e.y);
-      } else if (e.name === 'Sword') {
-        spawnSword(map, e.x, e.y);
-      } else if (e.name === 'Leather Armor') {
-        spawnLeatherArmor(map, e.x, e.y);
-      } else if (e.name === 'Chain Mail') {
-        spawnChainMail(map, e.x, e.y);
+  private static deserializeMapEntities(
+    map: GameMap,
+    rawEntities: SerializedEntity[],
+  ): void {
+    const actorSpawners: Record<
+      string,
+      (m: GameMap, x: number, y: number) => Actor
+    > = {
+      Rat: spawnRat,
+      Goblin: spawnGoblin,
+      Orc: spawnOrc,
+      Troll: spawnTroll,
+      Skeleton: spawnSkeleton,
+      Ogre: spawnOgre,
+      Vampire: spawnVampire,
+    };
+    const itemSpawners: Record<
+      string,
+      (m: GameMap, x: number, y: number) => Item
+    > = {
+      'Health Potion': spawnHealthPotion,
+      'Lightning Scroll': spawnLightningScroll,
+      'Confusion Scroll': spawnConfusionScroll,
+      'Fireball Scroll': spawnFireballScroll,
+      Dagger: spawnDagger,
+      Sword: spawnSword,
+      'Leather Armor': spawnLeatherArmor,
+      'Chain Mail': spawnChainMail,
+    };
+
+    for (const e of rawEntities) {
+      if (e.name === 'Player') continue;
+      const actorSpawn = actorSpawners[e.name];
+      if (actorSpawn) {
+        const actor = actorSpawn(map, e.x, e.y);
+        GameScreen.deserializeActor(actor, e);
+        continue;
       }
+      itemSpawners[e.name]?.(map, e.x, e.y);
     }
-    return [map, player, parsedMap.currentFloor];
+  }
+
+  private static deserializeActor(actor: Actor, raw: SerializedEntity): void {
+    actor.fighter.hp = raw.fighter?.hp || actor.fighter.hp;
+    if (raw.aiType === 'confused') {
+      actor.ai = new ConfusedEnemy(actor.ai, raw.confusedTurnsRemaining);
+    }
   }
 
   private toObject(): SerializedGameMap {
@@ -366,61 +355,54 @@ export class GameScreen extends BaseScreen {
       width: this.gameMap.width,
       height: this.gameMap.height,
       tiles: this.gameMap.tiles,
-      entities: this.gameMap.entities.map((e) => {
-        let fighter = null;
-        let level = null;
-        let aiType = null;
-        let inventory = null;
-        let confusedTurnsRemaining = 0;
+      entities: this.gameMap.entities.map((e) => this.serializeEntity(e)),
+    };
+  }
 
-        if (e instanceof Actor) {
-          const actor = e as Actor;
-          const { maxHp, _hp: hp, defense, power } = actor.fighter;
-          const {
-            currentXp,
-            currentLevel,
-            levelUpBase,
-            levelUpFactor,
-            xpGiven,
-            characterClass,
-          } = actor.level;
-          fighter = { maxHp, hp, defense, power };
-          level = {
-            currentXp,
-            currentLevel,
-            levelUpBase,
-            levelUpFactor,
-            xpGiven,
-            characterClass,
-          };
-          if (actor.ai) {
-            aiType = actor.ai instanceof HostileEnemy ? 'hostile' : 'confused';
-            confusedTurnsRemaining =
-              aiType === 'confused'
-                ? (actor.ai as ConfusedEnemy).turnsRemaining
-                : 0;
-          }
-          if (actor.inventory) {
-            inventory = [];
-            for (let item of actor.inventory.items) {
-              inventory.push({ itemType: item.name, equipped: actor.equipment.itemIsEquipped(item) });
-            }
-          }
-        }
-        return {
-          x: e.x,
-          y: e.y,
-          char: e.char,
-          fg: e.fg,
-          bg: e.bg,
-          name: e.name,
-          fighter,
-          level,
-          aiType,
-          confusedTurnsRemaining,
-          inventory,
-        };
-      }),
+  private serializeEntity(e: Entity): SerializedEntity {
+    let fighter = null;
+    let level = null;
+    let aiType = null;
+    let inventory = null;
+    let confusedTurnsRemaining = 0;
+
+    if (e instanceof Actor) {
+      const { maxHp, _hp: hp, defense, power } = e.fighter;
+      const {
+        currentXp,
+        currentLevel,
+        levelUpBase,
+        levelUpFactor,
+        xpGiven,
+        characterClass,
+      } = e.level;
+      fighter = { maxHp, hp, defense, power };
+      level = { currentXp, currentLevel, levelUpBase, levelUpFactor, xpGiven, characterClass };
+      if (e.ai) {
+        aiType = e.ai instanceof HostileEnemy ? 'hostile' : 'confused';
+        confusedTurnsRemaining =
+          aiType === 'confused' ? (e.ai as ConfusedEnemy).turnsRemaining : 0;
+      }
+      if (e.inventory) {
+        inventory = e.inventory.items.map((item) => ({
+          itemType: item.name,
+          equipped: e.equipment.itemIsEquipped(item),
+        }));
+      }
+    }
+
+    return {
+      x: e.x,
+      y: e.y,
+      char: e.char,
+      fg: e.fg,
+      bg: e.bg,
+      name: e.name,
+      fighter,
+      level,
+      aiType,
+      confusedTurnsRemaining,
+      inventory,
     };
   }
 }
