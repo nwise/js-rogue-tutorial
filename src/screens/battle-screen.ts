@@ -1,13 +1,12 @@
 import { Display } from 'rot-js';
 import { BaseScreen } from './base-screen';
+import { Actor, Item } from '../entity';
 import {
-  Actor,
-  Item,
   spawnHealthPotion,
   spawnLightningScroll,
   spawnConfusionScroll,
   spawnFireballScroll,
-} from '../entity';
+} from '../entity-factories';
 import { GameScreen } from './game-screen';
 import { BaseInputHandler, GameInputHandler } from '../input-handler';
 import { Colors } from '../colors';
@@ -16,105 +15,12 @@ import { EquipAction, ItemAction } from '../actions';
 
 type BattleState = 'menu' | 'inventory';
 
-const FRAME_X = 8;
-const FRAME_Y = 4;
-const FRAME_WIDTH = 64;
+const FRAME_X = 4;
+const FRAME_Y = 3;
+const FRAME_WIDTH = 42;
 const FRAME_HEIGHT = 22;
-const BAR_WIDTH = 26;
+const BAR_WIDTH = 14;
 
-// ── Enemy sprites ─────────────────────────────────────────────────────────────
-const ENEMY_ART: Record<string, string[]> = {
-  Rat: [
-    "       ",
-    " ,---. ",
-    "(  o,o)",
-    " \\_v_/ ",
-    "  ~//~ ",
-  ],
-  Goblin: [
-    "  ,^,  ",
-    " (o-o) ",
-    "/|=+|/ ",
-    "  | |  ",
-    " (_(_) ",
-  ],
-  Orc: [
-    "  ,_,  ",
-    " (o o) ",
-    " -\\v/- ",
-    " /|||\\  ",
-    "(_/ \\_)",
-  ],
-  Troll: [
-    " /^^^\\  ",
-    "(O   O) ",
-    " | v |  ",
-    " /| |\\ ",
-    "/__|__\\",
-  ],
-  Skeleton: [
-    " _/ \\_ ",
-    "(O   O)",
-    " |-+-| ",
-    " /| |\\ ",
-    "(_) (_)",
-  ],
-  Ogre: [
-    "/=====\\",
-    "(# @ #)",
-    "|=====|",
-    "| /_\\ |",
-    "/__|__\\",
-  ],
-  Vampire: [
-    "  /^\\  ",
-    " (^.^) ",
-    "<|===|>",
-    " || || ",
-    "(_) (_)",
-  ],
-};
-
-const DEFAULT_ENEMY_ART: string[] = [
-  "  .-.  ",
-  " (? ?) ",
-  "  -=-  ",
-  " /| |\\ ",
-  "(_/ \\_)",
-];
-
-// ── Player sprites by class ───────────────────────────────────────────────────
-const PLAYER_ART: Record<string, string[]> = {
-  warrior: [
-    " _[_]_ ",
-    "[_____]",
-    "| ]=[ |",
-    "|  |  |",
-    "/_/ \\_\\",
-  ],
-  wizard: [
-    "  ***  ",
-    " (^_^) ",
-    "  )|(  ",
-    "  -|-  ",
-    " /   \\ ",
-  ],
-  thief: [
-    "  /\\   ",
-    " (;-;) ",
-    "><   ><",
-    "  | |  ",
-    " /   \\ ",
-  ],
-};
-
-const DEFAULT_PLAYER_ART: string[] = [
-  "  .-. ",
-  " (o o)",
-  "  )o( ",
-  " /|\\ ",
-  "(_/ \\_)",
-];
 
 export class BattleScreen extends BaseScreen {
   inputHandler: BaseInputHandler;
@@ -204,6 +110,7 @@ export class BattleScreen extends BaseScreen {
   }
 
   private resolveAndReturn(runEnemyTurns: boolean): BaseScreen {
+    window.engine.pixiRenderer.clearBattleSprites();
     this.gameScreen.resumeAfterBattle(this.enemy, runEnemyTurns);
     return this.gameScreen;
   }
@@ -257,46 +164,54 @@ export class BattleScreen extends BaseScreen {
         this.render();
         return this;
       }
+      return this.handleInventoryKeypress(event);
+    }
 
-      const charCode = event.key.charCodeAt(0);
-      if (event.key.length === 1 && charCode >= 97 && charCode <= 122) {
-        const index = charCode - 97;
-        const item: Item | undefined = this.player.inventory.items[index];
+    this.render();
+    return this;
+  }
 
-        if (!item) {
-          this.render();
-          return this;
-        }
+  private handleInventoryKeypress(event: KeyboardEvent): BaseScreen {
+    const charCode = event.key.charCodeAt(0);
+    if (event.key.length !== 1 || charCode < 97 || charCode > 122) {
+      this.render();
+      return this;
+    }
 
-        if (item.equippable) {
-          new EquipAction(item).perform(this.player, this.gameScreen.gameMap);
-          const playerDied = this.performEnemyAttack();
-          this.state = 'menu';
-          if (playerDied) return this.resolveAndReturn(true);
-          this.render();
-          return this;
-        }
+    const index = charCode - 97;
+    const item: Item | undefined = this.player.inventory.items[index];
+    if (!item) {
+      this.render();
+      return this;
+    }
 
-        if (item.consumable) {
-          const action = item.consumable.getAction();
-          if (action === null) {
-            window.messageLog.addMessage("Can't use that in battle.", Colors.Impossible);
-            this.render();
-            return this;
-          }
-          try {
-            (action as ItemAction).perform(this.player, this.gameScreen.gameMap);
-          } catch {
-            this.render();
-            return this;
-          }
-          const playerDied = this.performEnemyAttack();
-          this.state = 'menu';
-          if (playerDied) return this.resolveAndReturn(true);
-          this.render();
-          return this;
-        }
+    if (item.equippable) {
+      new EquipAction(item).perform(this.player, this.gameScreen.gameMap);
+      const playerDied = this.performEnemyAttack();
+      this.state = 'menu';
+      if (playerDied) return this.resolveAndReturn(true);
+      this.render();
+      return this;
+    }
+
+    if (item.consumable) {
+      const action = item.consumable.getAction();
+      if (action === null) {
+        window.messageLog.addMessage("Can't use that in battle.", Colors.Impossible);
+        this.render();
+        return this;
       }
+      try {
+        (action as ItemAction).perform(this.player, this.gameScreen.gameMap);
+      } catch {
+        this.render();
+        return this;
+      }
+      const playerDied = this.performEnemyAttack();
+      this.state = 'menu';
+      if (playerDied) return this.resolveAndReturn(true);
+      this.render();
+      return this;
     }
 
     this.render();
@@ -305,72 +220,104 @@ export class BattleScreen extends BaseScreen {
 
   render() {
     this.gameScreen.render();
-    renderFrameWithTitle(FRAME_X, FRAME_Y, FRAME_WIDTH, FRAME_HEIGHT, 'Battle');
 
     const innerX = FRAME_X + 2;
-    const innerWidth = FRAME_WIDTH - 4;   // 60
-    const halfWidth = Math.floor(innerWidth / 2); // 30
+    const innerWidth = FRAME_WIDTH - 4;
+    const halfWidth = Math.floor(innerWidth / 2);
 
-    // ── ASCII art, side-by-side ───────────────────────────────────────────────
-    const enemyArt = ENEMY_ART[this.enemy.name] ?? DEFAULT_ENEMY_ART;
-    const playerClass = this.player.level.characterClass;
-    const playerArt = playerClass ? (PLAYER_ART[playerClass] ?? DEFAULT_PLAYER_ART) : DEFAULT_PLAYER_ART;
+    this.renderBattleFrame();
+    this.renderCombatantArt(innerX, halfWidth);
 
-    const artRows = Math.max(enemyArt.length, playerArt.length);
+    const nameRowY = FRAME_Y + 2 + 5 + 1;
+    this.renderCombatantLabels(innerX, halfWidth, nameRowY);
 
-    for (let row = 0; row < artRows; row++) {
-      const eLine = enemyArt[row] ?? '';
-      const pLine = playerArt[row] ?? '';
+    const hpStartY = nameRowY + 2;
+    this.renderHpBars(innerX, hpStartY);
 
-      const eX = innerX + Math.floor((halfWidth - eLine.length) / 2);
-      const pX = innerX + halfWidth + Math.floor((halfWidth - pLine.length) / 2);
-      const y = FRAME_Y + 2 + row;
+    const sepY = hpStartY + 3;
+    window.engine.display.drawText(innerX, sepY, '─'.repeat(innerWidth));
 
-      this.drawArtLine(eX, y, eLine);
-      this.drawArtLine(pX, y, pLine);
+    this.renderActionMenu(innerX, sepY + 1, innerWidth);
+  }
+
+  private renderBattleFrame(): void {
+    window.engine.pixiRenderer.clearGameSprites();
+    for (let y = FRAME_Y; y < FRAME_Y + FRAME_HEIGHT; y++) {
+      for (let x = FRAME_X; x < FRAME_X + FRAME_WIDTH; x++) {
+        this.display.draw(x, y, ' ', '#000', '#000');
+      }
     }
+    renderFrameWithTitle(FRAME_X, FRAME_Y, FRAME_WIDTH, FRAME_HEIGHT, 'Battle');
+  }
 
-    // "vs" divider in the vertical center of the art
+  private renderCombatantArt(innerX: number, halfWidth: number): void {
+    const playerClass = this.player.level.characterClass;
+    const artRows = 5;
+    const enemyCenterCol = innerX + Math.floor(halfWidth / 2);
+    const playerCenterCol = innerX + halfWidth + Math.floor(halfWidth / 2);
+    const artTopRow = FRAME_Y + 2;
+
+    window.engine.pixiRenderer.renderBattleSprites(
+      this.enemy,
+      playerClass,
+      enemyCenterCol,
+      playerCenterCol,
+      artTopRow,
+    );
+
     const vsY = FRAME_Y + 2 + Math.floor(artRows / 2);
-    const vsX = innerX + halfWidth - 1;
-    window.engine.display.drawText(vsX, vsY, 'vs');
+    window.engine.display.drawText(innerX + halfWidth - 1, vsY, 'vs');
+  }
 
-    // ── Name labels ───────────────────────────────────────────────────────────
-    const nameRowY = FRAME_Y + 2 + artRows + 1;
-
+  private renderCombatantLabels(
+    innerX: number,
+    halfWidth: number,
+    nameRowY: number,
+  ): void {
+    const playerClass = this.player.level.characterClass;
     const enemyLabel = this.enemy.name;
     const classLabel = playerClass
       ? playerClass.charAt(0).toUpperCase() + playerClass.slice(1)
       : 'Adventurer';
 
     const eLabelX = innerX + Math.floor((halfWidth - enemyLabel.length) / 2);
-    const pLabelX = innerX + halfWidth + Math.floor((halfWidth - classLabel.length) / 2);
+    const pLabelX =
+      innerX + halfWidth + Math.floor((halfWidth - classLabel.length) / 2);
     window.engine.display.drawText(eLabelX, nameRowY, enemyLabel);
     window.engine.display.drawText(pLabelX, nameRowY, classLabel);
+  }
 
-    // ── HP bars ───────────────────────────────────────────────────────────────
-    const hpStartY = nameRowY + 2;
-    this.drawCombatantRow(innerX, hpStartY, this.enemy.name, this.enemy.fighter.hp, this.enemy.fighter.maxHp);
-    this.drawCombatantRow(innerX, hpStartY + 1, 'Player', this.player.fighter.hp, this.player.fighter.maxHp);
+  private renderHpBars(innerX: number, hpStartY: number): void {
+    this.drawCombatantRow(
+      innerX,
+      hpStartY,
+      this.enemy.name,
+      this.enemy.fighter.hp,
+      this.enemy.fighter.maxHp,
+    );
+    this.drawCombatantRow(
+      innerX,
+      hpStartY + 1,
+      'Player',
+      this.player.fighter.hp,
+      this.player.fighter.maxHp,
+    );
+  }
 
-    // ── Separator ─────────────────────────────────────────────────────────────
-    const sepY = hpStartY + 3;
-    window.engine.display.drawText(innerX, sepY, '─'.repeat(innerWidth));
-
-    // ── Menu / inventory ──────────────────────────────────────────────────────
-    const contentY = sepY + 1;
-
+  private renderActionMenu(
+    innerX: number,
+    contentY: number,
+    innerWidth: number,
+  ): void {
     if (this.state === 'menu') {
       const isThief = this.player.level.characterClass === 'thief';
       if (isThief) {
-        // 2×2 grid
         const col = Math.floor(innerWidth / 2);
         window.engine.display.drawText(innerX, contentY, '[A] Attack');
         window.engine.display.drawText(innerX + col, contentY, '[I] Use Item');
         window.engine.display.drawText(innerX, contentY + 1, '[S] Steal');
         window.engine.display.drawText(innerX + col, contentY + 1, '[F] Flee');
       } else {
-        // all 3 on one row
         const col = Math.floor(innerWidth / 3);
         window.engine.display.drawText(innerX, contentY, '[A] Attack');
         window.engine.display.drawText(innerX + col, contentY, '[I] Use Item');
@@ -386,7 +333,9 @@ export class BattleScreen extends BaseScreen {
         const maxVisible = 5;
         items.slice(0, maxVisible).forEach((item, i) => {
           const letter = String.fromCharCode(97 + i);
-          const equippedMark = this.player.equipment.itemIsEquipped(item) ? ' (E)' : '';
+          const equippedMark = this.player.equipment.itemIsEquipped(item)
+            ? ' (E)'
+            : '';
           window.engine.display.drawText(
             innerX,
             contentY + 1 + i,
@@ -403,12 +352,6 @@ export class BattleScreen extends BaseScreen {
         const backY = contentY + 2 + Math.min(items.length, maxVisible);
         window.engine.display.drawText(innerX, backY, '(Esc) Back');
       }
-    }
-  }
-
-  private drawArtLine(x: number, y: number, line: string) {
-    for (let i = 0; i < line.length; i++) {
-      window.engine.display.draw(x + i, y, line[i], Colors.White, Colors.Black);
     }
   }
 

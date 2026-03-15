@@ -1,7 +1,8 @@
 import { GameMap } from './game-map';
 import { FLOOR_TILE, WALL_TILE, Tile, STAIRS_DOWN_TILE } from './tile-types';
 import { Display, RNG } from 'rot-js';
-import { Entity, spawnMap } from './entity';
+import { Entity } from './entity';
+import { spawnMap } from './entity-factories';
 
 interface Bounds {
   x1: number;

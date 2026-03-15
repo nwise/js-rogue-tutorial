@@ -1,8 +1,10 @@
 {
-  "spinnerTipsEnabled": false,
   "permissions": {
     "allow": [
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "WebSearch",
+      "Bash(npm install:*)"
     ]
-  }
+  },
+  "spinnerTipsEnabled": false
 }
