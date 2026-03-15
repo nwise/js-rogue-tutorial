@@ -55,9 +55,9 @@ export function wallMask(
   const _isSurfaceWall = (cx: number, cy: number) =>
     isSurfaceWall(tiles, cx, cy, width, height);
   let mask = 0;
-  if (_isSurfaceWall(x, y + 1)) mask |= 1; // N (tile-art north = screen down)
+  if (_isSurfaceWall(x, y + 1)) mask |= 1; // N
   if (_isSurfaceWall(x + 1, y)) mask |= 2; // E
-  if (_isSurfaceWall(x, y - 1)) mask |= 4; // S (tile-art south = screen up)
+  if (_isSurfaceWall(x, y - 1)) mask |= 4; // S
   if (_isSurfaceWall(x - 1, y)) mask |= 8; // W
   return mask;
 }
@@ -70,22 +70,22 @@ export function wallMask(
  * tiles for your wall style in Floor.png.
  */
 const WALL_MASK_SPRITES: SpriteRef[] = [
-  g('Wall', 3, 1), //  0 ·  isolated        -- TODO: find correct sprite
-  g('Wall', 1, 5), //  1 ╷  N               -- TODO: find correct sprite
-  g('Wall', 2, 4), //  2 ╶  E               -- TODO: find correct sprite
-  g('Wall', 1, 4), //  3 ┌  N+E             -- CORRECT
-  g('Wall', 2, 5), //  4 ╵  S               -- TODO: find correct sprite
-  g('Wall', 1, 5), //  5 │  N+S             -- TODO: find correct sprite (showing horizontal bars)
-  g('Wall', 1, 6), //  6 └  S+E             -- CORRECT
-  g('Wall', 1, 4), //  7 ├  N+S+E           -- TODO: wrong (reusing ┌ corner)
-  g('Wall', 2, 4), //  8 ╴  W               -- TODO: find correct sprite
-  g('Wall', 3, 4), //  9 ┐  N+W             -- CORRECT
-  g('Wall', 2, 4), // 10 ─  E+W             -- CORRECT
-  g('Wall', 2, 4), // 11 ┬  N+E+W           -- TODO: wrong (reusing ─)
-  g('Wall', 3, 6), // 12 ┘  S+W             -- CORRECT
-  g('Wall', 3, 4), // 13 ┤  N+S+W           -- TODO: wrong (reusing ┐ corner)
-  g('Wall', 2, 4), // 14 ┴  S+E+W           -- TODO: wrong (reusing ─)
-  g('Wall', 2, 4), // 15 ┼  N+S+E+W         -- TODO: find correct sprite
+  g('Wall', 2, 2), //  0 ·  isolated
+  g('Wall', 1, 5), //  1 ╷  N
+  g('Wall', 2, 4), //  2 ╶  E
+  g('Wall', 1, 4), //  3 ┌  N+E
+  g('Wall', 2, 5), //  4 ╵  S
+  g('Wall', 1, 5), //  5 │  N+S
+  g('Wall', 1, 6), //  6 └  S+E
+  g('Wall', 4, 5), //  7 ├  N+S+E
+  g('Wall', 2, 4), //  8 ╴  W
+  g('Wall', 3, 4), //  9 ┐  N+W
+  g('Wall', 2, 4), // 10 ─  E+W
+  g('Wall', 2, 4), // 11 ┬  N+E+W  -- use ─ (doubled-wall middle tiles)
+  g('Wall', 3, 6), // 12 ┘  S+W
+  g('Wall', 6, 5), // 13 ┤  N+S+W
+  g('Wall', 2, 4), // 14 ┴  S+E+W  -- use ─ (doubled-wall middle tiles)
+  g('Wall', 5, 5), // 15 ┼  N+S+E+W
 ];
 
 export function wallSpriteForMask(mask: number): SpriteRef {
@@ -121,7 +121,7 @@ export const WALL_MASK_CHARS: string[] = [
 export const DEBUG_WALLS = false;
 
 /** Set to true to reveal the entire map (disables fog of war). */
-export const DEBUG_FOV = false;
+export const DEBUG_FOV = true;
 
 // Floor/Wall use palette PNGs. Character/item sheets use RGBA PNGs.
 
