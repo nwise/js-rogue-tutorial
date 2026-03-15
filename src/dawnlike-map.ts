@@ -78,7 +78,7 @@ const WALL_MASK_SPRITES: SpriteRef[] = [
   g('Wall', 1, 5), //  5 │  N+S             -- TODO: find correct sprite (showing horizontal bars)
   g('Wall', 1, 6), //  6 └  S+E             -- CORRECT
   g('Wall', 1, 4), //  7 ├  N+S+E           -- TODO: wrong (reusing ┌ corner)
-  g('Wall', 4, 3), //  8 ╴  W               -- TODO: find correct sprite
+  g('Wall', 2, 4), //  8 ╴  W               -- TODO: find correct sprite
   g('Wall', 3, 4), //  9 ┐  N+W             -- CORRECT
   g('Wall', 2, 4), // 10 ─  E+W             -- CORRECT
   g('Wall', 2, 4), // 11 ┬  N+E+W           -- TODO: wrong (reusing ─)
@@ -121,7 +121,7 @@ export const WALL_MASK_CHARS: string[] = [
 export const DEBUG_WALLS = false;
 
 /** Set to true to reveal the entire map (disables fog of war). */
-export const DEBUG_FOV = true;
+export const DEBUG_FOV = false;
 
 // Floor/Wall use palette PNGs. Character/item sheets use RGBA PNGs.
 
